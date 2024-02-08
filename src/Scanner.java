@@ -65,6 +65,10 @@ class Scanner {
         return current >= source.length();
     }
 
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
     /**
     Consume the next character only if it's what we're looking for.
     */
@@ -79,6 +83,28 @@ class Scanner {
     }
 
     /**
+    Add number literal.
+    */
+    private void number() {
+        // Consume (compulsary) integer part
+        while (isDigit(peek())) {
+            advance();
+        }
+
+        // Fractional part?
+        if (peek() == '.' && isDigit(peekNext())) {
+            advance();
+            while (isDigit(peek())) {
+                advance();
+            }
+        }
+
+        // Create literal
+        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+    }
+
+
+    /**
     Look ahead at next character, but do not consume.
     */
     private char peek() {
@@ -86,6 +112,15 @@ class Scanner {
             return '\0';
 
         return source.charAt(current);
+    }
+
+    /**
+    Look ahead to second upcoming character.
+    */
+    private char peekNext() {
+        if (current + 1 >= source.length())
+            return '\0';
+        return source.charAt(current + 1);
     }
 
     private void scanToken() {
@@ -145,10 +180,18 @@ class Scanner {
                 break;
 
             default:
-                Lox.error(line, "Unexpected character.");
+                if (isDigit(c)) {
+                    number();
+                } else {
+                    Lox.error(line, "Unexpected character.");
+                }
+                break;
         }
     }
 
+    /**
+    Add string literal.
+    */
     private void string() {
         // Advance to end of string, allowing new-lines.
         while (peek() != '"' && ! isAtEnd()) {
