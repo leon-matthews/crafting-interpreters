@@ -65,9 +65,33 @@ class Scanner {
         return current >= source.length();
     }
 
+    /**
+    Consume the next character only if it's what we're looking for.
+    */
+    private boolean match(char expected) {
+        if (isAtEnd())
+            return false;
+        if (source.charAt(current) != expected)
+            return false;
+
+        current++;
+        return true;
+    }
+
+    /**
+    Look ahead at next character, but do not consume.
+    */
+    private char peek() {
+        if (isAtEnd())
+            return '\0';
+
+        return source.charAt(current);
+    }
+
     private void scanToken() {
         char c = advance();
         switch (c) {
+            // Single character
             case '(': addToken(LEFT_PAREN); break;
             case ')': addToken(RIGHT_PAREN); break;
             case '{': addToken(LEFT_BRACE); break;
@@ -78,6 +102,72 @@ class Scanner {
             case '+': addToken(PLUS); break;
             case ';': addToken(SEMICOLON); break;
             case '*': addToken(STAR); break;
+
+            // One or two characters
+            case '!':
+                addToken(match('=') ? BANG_EQUAL : BANG);
+                break;
+            case '=':
+                addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+                break;
+            case '<':
+                addToken(match('=') ? LESS_EQUAL : LESS);
+                break;
+            case '>':
+                addToken(match('=') ? GREATER_EQUAL : GREATER);
+                break;
+
+            // Comment or division?
+            case '/':
+                if (match('/')) {
+                    while (peek() != '\n' && ! isAtEnd()) {
+                        advance();
+                    }
+                } else {
+                    addToken(SLASH);
+                }
+                break;
+
+            // Skip whitespace
+            case ' ':
+            case '\r':
+            case 't':
+                break;
+
+            // Newline
+            case '\n':
+                line++;
+                break;
+
+            // String literal
+            case '"':
+                string();
+                break;
+
+            default:
+                Lox.error(line, "Unexpected character.");
         }
+    }
+
+    private void string() {
+        // Advance to end of string, allowing new-lines.
+        while (peek() != '"' && ! isAtEnd()) {
+            if (peek() == '\n')
+                line++;
+            advance();
+        }
+
+        // End of file found?
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string.");
+            return;
+        }
+
+        // Consume closing quote-marks
+        advance();
+
+        // Strip quote-marks and create literal
+        String value = source.substring(start + 1, current - 1);
+        addToken(STRING, value);
     }
 }
