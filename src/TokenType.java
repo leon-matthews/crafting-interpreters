@@ -1,6 +1,5 @@
 
-package nz.co.lost.jlox;
-
+package jlox;
 
 enum TokenType {
     // Single character tokens

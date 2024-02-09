@@ -1,5 +1,5 @@
 
-package nz.co.lost.jlox;
+package jlox;
 
 /**
 Tokens output from the scanner.

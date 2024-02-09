@@ -1,5 +1,5 @@
 
-package nz.co.lost.jlox;
+package jlox;
 
 import java.io.BufferedReader;
 import java.io.IOException;
